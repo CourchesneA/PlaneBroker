@@ -9,27 +9,11 @@ public abstract class Broker implements Runnable {
 		this.brokerID = brokerID;
 	}
 	
-	protected boolean attemptReservation(int row, int column, int brokerID){
-		boolean result;
-		
-		plane.seatsLock.lock();
-		try{
-			result = plane.requestSeat(column, row, brokerID);
-		}finally{
-			plane.seatsLock.unlock();
-		}
-		return result;
+	protected boolean attemptReservation(int column, int row, int brokerID){
+		return plane.requestSeat(column, row, brokerID);
 	}
 	
 	protected boolean cancelReservation(int row, int column, int brokerID){
-		boolean result;
-		
-		plane.seatsLock.lock();
-		try{
-			result = plane.freeSeat(column, row, brokerID);
-		}finally{
-			plane.seatsLock.unlock();
-		}
-		return result;
+		return plane.freeSeat(column, row, brokerID);
 	}
 }

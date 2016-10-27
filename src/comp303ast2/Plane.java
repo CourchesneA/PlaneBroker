@@ -5,24 +5,32 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Plane {
-	public Lock seatsLock = new ReentrantLock();
-	public Lock asChangedLock = new ReentrantLock();
-	/*private Condition asChangedCondition = asChangedLock.newCondition();
-	private boolean asChanged = false;*/
+	private Lock seatsLock = new ReentrantLock();
+	private Lock hasChangedLock = new ReentrantLock();
+	private Condition hasChangedCondition = hasChangedLock.newCondition();
+	private boolean hasChanged;
 	private int seatsTaken = 0;
-	private int seats[][] = new int[4][50];
+	private int seats[][] = new int[50][4];
 	
 	public boolean requestSeat(int column, int row, int broker){
 		if(seats[row][column]!=0){
 			return false;
 		}
-		seats[row][column] = broker;
-		seatsTaken++;
+		System.out.println("Broker "+broker+" reserved seat "+column+"-"+row);
+		seatsLock.lock();
+		try{
+			seats[row][column] = broker;
+			seatsTaken++;
+		}finally{
+			seatsLock.unlock();
+		}
 		
-		/*asChangedLock.lock();
-		asChanged = true;
-		asChangedCondition.signalAll();
-		asChangedLock.unlock();*/
+		if(!hasChanged){	//Do not request the lock if we dont need to
+			hasChangedLock.lock();
+			hasChanged = true;
+			hasChangedCondition.signalAll();
+			hasChangedLock.unlock();
+		}
 		
 		return true;
 	}
@@ -32,15 +40,26 @@ public class Plane {
 		if(seats[row][column] == 9 || seats[row][column] != broker){
 			return false;
 		}
+		try{
+			seats[row][column] = 0;
+			seatsTaken--;
+		}finally{
+			seatsLock.unlock();
+		}
 		
-		seats[row][column] = 0;
 		
-	/*	asChangedLock.lock();
-		asChanged = true;
-		asChangedCondition.signalAll();
-		asChangedLock.unlock();*/
+		if(!hasChanged){	//Do not request the lock if we don't need to
+			hasChangedLock.lock();
+			hasChanged = true;
+			hasChangedCondition.signalAll();
+			hasChangedLock.unlock();
+		}
 		
 		return true;
+	}
+	
+	public int getSeatStatus(int column, int row){
+		return seats[row][column];
 	}
 	
 	public boolean isFull(){
@@ -50,5 +69,21 @@ public class Plane {
 		return false;
 	}
 	
+	public boolean needUpdate(){
+		return hasChanged;
+	}
+	
+	public void setUpdateState(){
+		hasChanged = false;
+	}
+	
+	public void waitUpdate() throws InterruptedException{
+		try{
+			hasChangedLock.lock();
+			hasChangedCondition.await();
+		}finally{
+			hasChangedLock.unlock();
+		}
+	}
 	
 }

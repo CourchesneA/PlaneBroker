@@ -16,8 +16,8 @@ public class Application {
 		Thread t2 = new Thread(broker2);
 		Thread t3 = new Thread(broker3);
 		
-		//t1.start();
-		//t2.start();
+		t1.start();
+		t2.start();
 		t3.start();
 		
 	}

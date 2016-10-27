@@ -1,5 +1,7 @@
 package comp303ast2;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 public class AutonomeBroker extends Broker {
 	//private Plane plane;
 	//private int brokerID;
@@ -13,12 +15,14 @@ public class AutonomeBroker extends Broker {
 		
 		while(!plane.isFull()){
 			
-			double waitTime = Math.random()*10;	//Time before next random attempt: 1-10
+			double waitTime = ThreadLocalRandom.current().nextInt(500,4000);	//Time before next random attempt: 1-10
 			try {
-				int row = (int) Math.random()*4 + 1;
-				int column = (int) Math.random()*50 + 1;
-				attemptReservation(row,column,brokerID);
 				Thread.sleep((long) waitTime);
+				int column = (ThreadLocalRandom.current().nextInt(0,4));
+				int row = ThreadLocalRandom.current().nextInt(0,50);
+				System.out.println("Random: "+column+"-"+row+" wait: "+waitTime);
+				attemptReservation(column,row,brokerID);
+				
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}

@@ -8,7 +8,6 @@ import javax.swing.*;
 public class ManualBroker extends Broker {
 	JButton[] buttonArray = new JButton[200];
 
-	
 	public ManualBroker(Plane plane, int brokerID){
 		super(plane,brokerID);
 	}
@@ -24,10 +23,16 @@ public class ManualBroker extends Broker {
 			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 			frame.pack();
 			frame.setVisible(true);
+			while(!plane.isFull()){
+				if(!plane.needUpdate()){
+					plane.waitUpdate();
+				}
+				updateDisplay();
+				Thread.sleep(500);
+			}
 			
-			Thread.sleep(1000);
 		}catch( InterruptedException e){
-			
+			System.out.println("The thread has been interrupted");
 		}
 
 	}
@@ -49,16 +54,35 @@ public class ManualBroker extends Broker {
 		return new ActionListener(){
 			public void actionPerformed(ActionEvent event){
 				if(attemptReservation(index%4, index/4, brokerID)){
-					System.out.println("Broker "+brokerID+" reserved seat "+index%4 +"-"+ index/4);
 					JButton currentButton = buttonArray[index];
 					currentButton.setBackground(Color.blue);
-					currentButton.setText("R: " + brokerID);
+					currentButton.setText(Integer.toString(brokerID));
 					currentButton.setForeground(Color.white);
-					//currentButton.removeActionListener(currentButton.getActionListeners()[0]);
-					//currentButton.addActionListener(createRefundButtonListener(index, brokerID));
 				}
 			}
 		};
+	}
+	
+	private void updateDisplay(){
+		
+		for(int i=0; i<200; i++){
+			int status;
+			if( (status = plane.getSeatStatus(i%4,i/4)) != 0){
+				buttonArray[i].setText(Integer.toString(status));
+				switch(status){
+					case 1:
+						buttonArray[i].setBackground(Color.red);
+						break;
+					case 2:
+						buttonArray[i].setBackground(Color.green);
+						break;
+					case 3:
+						buttonArray[i].setBackground(Color.blue);
+						buttonArray[i].setForeground(Color.white);
+						break;
+				}
+			}
+		}
 	}
 	
 	
